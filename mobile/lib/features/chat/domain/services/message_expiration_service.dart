@@ -5,19 +5,30 @@ enum MessageDuration {
   threeWeeks,
 }
 
-class MessageExpirationService {
-  static DateTime calculateExpiry(MessageDuration duration) {
-    final now = DateTime.now();
+extension MessageDurationX on MessageDuration {
+  int get days => switch (this) {
+        MessageDuration.twoDays => 2,
+        MessageDuration.oneWeek => 7,
+        MessageDuration.twoWeeks => 14,
+        MessageDuration.threeWeeks => 21,
+      };
 
-    switch (duration) {
-      case MessageDuration.twoDays:
-        return now.add(const Duration(days: 2));
-      case MessageDuration.oneWeek:
-        return now.add(const Duration(days: 7));
-      case MessageDuration.twoWeeks:
-        return now.add(const Duration(days: 14));
-      case MessageDuration.threeWeeks:
-        return now.add(const Duration(days: 21));
-    }
+  String get label => switch (this) {
+        MessageDuration.twoDays => 'يومان',
+        MessageDuration.oneWeek => 'أسبوع',
+        MessageDuration.twoWeeks => 'أسبوعان',
+        MessageDuration.threeWeeks => '3 أسابيع',
+      };
+}
+
+class MessageExpirationService {
+  const MessageExpirationService._();
+
+  static DateTime calculateExpiry(
+    MessageDuration duration, {
+    DateTime? from,
+  }) {
+    final start = (from ?? DateTime.now()).toUtc();
+    return start.add(Duration(days: duration.days));
   }
 }
