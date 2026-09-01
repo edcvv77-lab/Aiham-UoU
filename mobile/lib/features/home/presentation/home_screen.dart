@@ -6,9 +6,21 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('NOVA Chat')),
-      body: const Center(
-        child: Text('Private communication system'),
+      appBar: AppBar(
+        title: const Text('NOVA Chat'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.forum_outlined, size: 72),
+            SizedBox(height: 16),
+            Text(
+              'Private communication space',
+              style: TextStyle(fontSize: 18),
+            ),
+          ],
+        ),
       ),
     );
   }
