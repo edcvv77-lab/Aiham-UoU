@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/firebase/firebase_service.dart';
+import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'features/home/presentation/home_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await FirebaseService.initialize();
+
   runApp(const ProviderScope(child: NovaChatApp()));
 }
 
@@ -13,11 +17,11 @@ class NovaChatApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'NOVA Chat',
+      title: 'UoU',
       theme: AppTheme.dark,
-      home: const HomeScreen(),
+      routerConfig: AppRouter.router,
     );
   }
 }
