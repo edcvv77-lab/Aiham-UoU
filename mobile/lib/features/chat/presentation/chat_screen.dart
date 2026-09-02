@@ -10,6 +10,7 @@ import 'widgets/typing_indicator.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key, required this.conversationId, required this.currentUserId, required this.peerId, required this.peerName});
+
   final String conversationId;
   final String currentUserId;
   final String peerId;
@@ -27,7 +28,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(chatRepositoryProvider).markMessagesAsRead(widget.conversationId, widget.currentUserId));
+    Future.microtask(() => ref.read(chatRepositoryProvider).markMessagesAsRead(
+          conversationId: widget.conversationId,
+          userId: widget.currentUserId,
+        ));
   }
 
   @override
@@ -59,52 +63,35 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final messages = ref.watch(chatMessagesProvider(widget.conversationId));
     return Scaffold(
       appBar: AppBar(title: Text(widget.peerName)),
-      body: Column(children: [
-        Expanded(child: messages.when(
-          data: (items) => _MessagesList(messages: items, currentUserId: widget.currentUserId),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('$e')),
-        )),
-        const TypingIndicator(visible: false),
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(children: [
-            Expanded(child: TextField(controller: controller, decoration: const InputDecoration(hintText: 'اكتب رسالة...'))),
-            IconButton(onPressed: send, icon: const Icon(Icons.send)),
-          ]),
-        )
-      ]),
-    );
-  }
-}
-
-class _MessagesList extends StatelessWidget {
-  const _MessagesList({required this.messages, required this.currentUserId});
-  final List<MessageModel> messages;
-  final String currentUserId;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: messages.length,
-      itemBuilder: (context, index) {
-        final message = messages[index];
-        final mine = message.senderId == currentUserId;
-        return Align(
-          alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            padding: const EdgeInsets.all(12),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(message.text),
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                Text(DateFormat.Hm().format(message.createdAt.toLocal())),
-                if (mine) MessageStatusIcon(status: message.status),
-              ])
-            ]),
+      body: Column(
+        children: [
+          Expanded(
+            child: messages.when(
+              data: (items) => ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (_, index) {
+                  final message = items[index];
+                  final mine = message.senderId == widget.currentUserId;
+                  return ListTile(
+                    title: Text(message.text),
+                    subtitle: Text(DateFormat.Hm().format(message.createdAt.toLocal())),
+                    trailing: mine ? MessageStatusIcon(status: message.status) : null,
+                  );
+                },
+              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('$e')),
+            ),
           ),
-        );
-      },
+          const TypingIndicator(visible: false),
+          Row(
+            children: [
+              Expanded(child: TextField(controller: controller)),
+              IconButton(onPressed: send, icon: const Icon(Icons.send)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
