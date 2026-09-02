@@ -24,14 +24,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final controller = TextEditingController();
   MessageDuration duration = MessageDuration.twoDays;
   bool sending = false;
+  bool peerTyping = false;
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() => ref.read(chatRepositoryProvider).markMessagesAsRead(
-          conversationId: widget.conversationId,
-          userId: widget.currentUserId,
-        ));
+      conversationId: widget.conversationId,
+      userId: widget.currentUserId,
+    ));
   }
 
   @override
@@ -55,7 +56,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       expireAt: MessageExpirationService.calculateExpiry(duration, from: now),
     ));
     controller.clear();
-    if (mounted) setState(() => sending = false);
+    setState(() {
+      sending = false;
+      peerTyping = false;
+    });
   }
 
   @override
@@ -83,10 +87,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               error: (e, _) => Center(child: Text('$e')),
             ),
           ),
-          const TypingIndicator(visible: false),
+          TypingIndicator(visible: peerTyping),
           Row(
             children: [
-              Expanded(child: TextField(controller: controller)),
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  onChanged: (value) {
+                    setState(() => peerTyping = value.isNotEmpty);
+                  },
+                ),
+              ),
               IconButton(onPressed: send, icon: const Icon(Icons.send)),
             ],
           ),
