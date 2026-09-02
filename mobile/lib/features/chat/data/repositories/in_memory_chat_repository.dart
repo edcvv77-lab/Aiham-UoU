@@ -43,10 +43,40 @@ class InMemoryChatRepository implements ChatRepository {
   }
 
   @override
+  Future<void> markMessagesAsRead({
+    required String conversationId,
+    required String userId,
+  }) async {
+    final messages = _messagesByConversation[conversationId];
+    if (messages == null) return;
+    _messagesByConversation[conversationId] = messages.map((message) {
+      if (message.receiverId == userId) {
+        return MessageModel(
+          id: message.id,
+          conversationId: message.conversationId,
+          senderId: message.senderId,
+          receiverId: message.receiverId,
+          text: message.text,
+          createdAt: message.createdAt,
+          expireAt: message.expireAt,
+          status: MessageStatus.read,
+        );
+      }
+      return message;
+    }).toList();
+    _emit(conversationId);
+  }
+
+  @override
+  Future<void> markMessageAsDelivered({
+    required String conversationId,
+    required String messageId,
+  }) async {}
+
+  @override
   Future<void> deleteExpiredMessages() async {
     for (final conversationId in _messagesByConversation.keys.toList()) {
-      _messagesByConversation[conversationId] =
-          _activeMessages(conversationId);
+      _messagesByConversation[conversationId] = _activeMessages(conversationId);
       _emit(conversationId);
     }
   }
