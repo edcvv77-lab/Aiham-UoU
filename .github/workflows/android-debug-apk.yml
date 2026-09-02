@@ -35,11 +35,6 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate Android platform
-        run: |
-          flutter create --platforms=android --org com.aiham.uou .
-          rm -f test/widget_test.dart
-
       - name: Install dependencies
         run: flutter pub get
 
