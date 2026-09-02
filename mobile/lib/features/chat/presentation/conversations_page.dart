@@ -34,13 +34,13 @@ class ConversationsPage extends StatelessWidget {
             itemCount: conversations.length,
             itemBuilder: (context, index) {
               final conversation = conversations[index];
+              final peers = conversation.participants
+                  .where((id) => id != userId)
+                  .toList();
+              final peerName = peers.isEmpty ? 'مستخدم' : peers.first;
+
               return ListTile(
-                title: Text(
-                  conversation.participants
-                      .where((id) => id != userId)
-                      .firstOrNull ??
-                      'مستخدم',
-                ),
+                title: Text(peerName),
                 subtitle: Text(conversation.lastMessage),
                 trailing: conversation.unreadCount > 0
                     ? CircleAvatar(
