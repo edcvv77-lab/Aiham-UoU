@@ -1,5 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum MessageStatus {
+  sending,
+  sent,
+  delivered,
+  read,
+}
+
 class MessageModel {
   final String id;
   final String conversationId;
@@ -8,6 +15,7 @@ class MessageModel {
   final String text;
   final DateTime createdAt;
   final DateTime expireAt;
+  final MessageStatus status;
 
   const MessageModel({
     required this.id,
@@ -17,6 +25,7 @@ class MessageModel {
     required this.text,
     required this.createdAt,
     required this.expireAt,
+    this.status = MessageStatus.sent,
   });
 
   bool get isExpired => !expireAt.isAfter(DateTime.now().toUtc());
@@ -27,6 +36,7 @@ class MessageModel {
       'senderId': senderId,
       'receiverId': receiverId,
       'text': text,
+      'status': status.name,
       'createdAt': Timestamp.fromDate(createdAt.toUtc()),
       'expireAt': Timestamp.fromDate(expireAt.toUtc()),
     };
@@ -42,8 +52,16 @@ class MessageModel {
       senderId: data['senderId'] as String? ?? '',
       receiverId: data['receiverId'] as String? ?? '',
       text: data['text'] as String? ?? '',
+      status: _readStatus(data['status']),
       createdAt: _readDate(data['createdAt']),
       expireAt: _readDate(data['expireAt']),
+    );
+  }
+
+  static MessageStatus _readStatus(dynamic value) {
+    return MessageStatus.values.firstWhere(
+      (item) => item.name == value,
+      orElse: () => MessageStatus.sent,
     );
   }
 
