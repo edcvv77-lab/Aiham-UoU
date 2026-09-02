@@ -38,7 +38,6 @@ class FirestoreChatRepository implements ChatRepository {
     final messageRef = _messages(message.conversationId).doc(message.id);
 
     final batch = _firestore.batch();
-
     batch.set(
       conversationRef,
       {
@@ -47,10 +46,35 @@ class FirestoreChatRepository implements ChatRepository {
       },
       SetOptions(merge: true),
     );
-
     batch.set(messageRef, message.toMap());
-
     await batch.commit();
+  }
+
+  @override
+  Future<void> markMessagesAsRead({
+    required String conversationId,
+    required String userId,
+  }) async {
+    final snapshot = await _messages(conversationId)
+        .where('receiverId', isEqualTo: userId)
+        .where('status', isNotEqualTo: MessageStatus.read.name)
+        .get();
+
+    final batch = _firestore.batch();
+    for (final doc in snapshot.docs) {
+      batch.update(doc.reference, {'status': MessageStatus.read.name});
+    }
+    await batch.commit();
+  }
+
+  @override
+  Future<void> markMessageAsDelivered({
+    required String conversationId,
+    required String messageId,
+  }) async {
+    await _messages(conversationId).doc(messageId).update({
+      'status': MessageStatus.delivered.name,
+    });
   }
 
   @override
