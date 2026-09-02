@@ -1,3 +1,5 @@
+import 'message_status.dart';
+
 class ChatMessage {
   final String id;
   final String senderId;
@@ -5,6 +7,7 @@ class ChatMessage {
   final String text;
   final DateTime createdAt;
   final DateTime expireAt;
+  final MessageStatus status;
 
   const ChatMessage({
     required this.id,
@@ -13,6 +16,7 @@ class ChatMessage {
     required this.text,
     required this.createdAt,
     required this.expireAt,
+    this.status = MessageStatus.sent,
   });
 
   bool get isExpired => DateTime.now().isAfter(expireAt);
