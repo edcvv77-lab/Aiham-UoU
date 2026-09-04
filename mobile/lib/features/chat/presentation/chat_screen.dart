@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../data/models/message_model.dart';
 import '../domain/services/message_expiration_service.dart';
 import 'providers/chat_providers.dart';
+import 'providers/typing_provider.dart';
 import 'widgets/message_status_icon.dart';
 import 'widgets/typing_indicator.dart';
 
@@ -24,7 +25,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final controller = TextEditingController();
   MessageDuration duration = MessageDuration.twoDays;
   bool sending = false;
-  bool peerTyping = false;
 
   @override
   void initState() {
@@ -55,18 +55,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       createdAt: now,
       expireAt: MessageExpirationService.calculateExpiry(duration, from: now),
     ));
+    await ref.read(typingServiceProvider).setTyping(
+      conversationId: widget.conversationId,
+      userId: widget.currentUserId,
+      value: false,
+    );
     controller.clear();
-    if (mounted) {
-      setState(() {
-        sending = false;
-        peerTyping = false;
-      });
-    }
+    if (mounted) setState(() => sending = false);
+  }
+
+  void updateTyping(String value) {
+    ref.read(typingServiceProvider).setTyping(
+      conversationId: widget.conversationId,
+      userId: widget.currentUserId,
+      value: value.trim().isNotEmpty,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final messages = ref.watch(chatMessagesProvider(widget.conversationId));
+    final typing = ref.watch(typingStateProvider(widget.conversationId));
+    final peerTyping = typing.maybeWhen(
+      data: (state) => state[widget.peerId] == true,
+      orElse: () => false,
+    );
+
     return Scaffold(
       appBar: AppBar(title: Text(widget.peerName)),
       body: Column(
@@ -80,22 +94,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   final mine = message.senderId == widget.currentUserId;
                   return Align(
                     alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(message.text),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(DateFormat.Hm().format(message.createdAt.toLocal())),
-                              if (mine) MessageStatusIcon(status: message.status),
-                            ],
-                          ),
-                        ],
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(message.text),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(DateFormat.Hm().format(message.createdAt.toLocal())),
+                            if (mine) MessageStatusIcon(status: message.status),
+                          ],
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -107,7 +117,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           TypingIndicator(visible: peerTyping),
           Row(
             children: [
-              Expanded(child: TextField(controller: controller, onChanged: (v) => setState(() => peerTyping = v.isNotEmpty))),
+              Expanded(child: TextField(controller: controller, onChanged: updateTyping)),
               IconButton(onPressed: send, icon: const Icon(Icons.send)),
             ],
           ),
