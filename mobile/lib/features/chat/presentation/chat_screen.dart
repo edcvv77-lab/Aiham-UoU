@@ -56,10 +56,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       expireAt: MessageExpirationService.calculateExpiry(duration, from: now),
     ));
     controller.clear();
-    setState(() {
-      sending = false;
-      peerTyping = false;
-    });
+    if (mounted) {
+      setState(() {
+        sending = false;
+        peerTyping = false;
+      });
+    }
   }
 
   @override
@@ -76,10 +78,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 itemBuilder: (_, index) {
                   final message = items[index];
                   final mine = message.senderId == widget.currentUserId;
-                  return ListTile(
-                    title: Text(message.text),
-                    subtitle: Text(DateFormat.Hm().format(message.createdAt.toLocal())),
-                    trailing: mine ? MessageStatusIcon(status: message.status) : null,
+                  return Align(
+                    alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(message.text),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(DateFormat.Hm().format(message.createdAt.toLocal())),
+                              if (mine) MessageStatusIcon(status: message.status),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   );
                 },
               ),
@@ -90,14 +107,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           TypingIndicator(visible: peerTyping),
           Row(
             children: [
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  onChanged: (value) {
-                    setState(() => peerTyping = value.isNotEmpty);
-                  },
-                ),
-              ),
+              Expanded(child: TextField(controller: controller, onChanged: (v) => setState(() => peerTyping = v.isNotEmpty))),
               IconButton(onPressed: send, icon: const Icon(Icons.send)),
             ],
           ),
