@@ -41,7 +41,11 @@ class ConversationsPage extends StatelessWidget {
 
               return ListTile(
                 title: Text(peerName),
-                subtitle: Text(conversation.lastMessage),
+                subtitle: Text(
+                  conversation.isTyping
+                      ? 'يكتب الآن...'
+                      : conversation.lastMessage,
+                ),
                 trailing: conversation.unreadCount > 0
                     ? CircleAvatar(
                         radius: 12,
