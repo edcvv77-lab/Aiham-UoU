@@ -21,6 +21,13 @@ class UserProfileRepository {
     return UserProfileModel.fromMap(snapshot.data()!);
   }
 
+  Stream<UserProfileModel?> watchProfile(String id) {
+    return _firestore.collection('users').doc(id).snapshots().map((snapshot) {
+      if (!snapshot.exists || snapshot.data() == null) return null;
+      return UserProfileModel.fromMap(snapshot.data()!);
+    });
+  }
+
   Stream<QuerySnapshot<Map<String, dynamic>>> searchUsers(String query) {
     return _firestore
         .collection('users')
